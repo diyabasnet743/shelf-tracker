@@ -1,4 +1,4 @@
-# 📚 ShelfTracker
+# ShelfTracker
 A full-stack book tracking app with a visual 3D bookshelf, personal reviews, reading stats, and AI-powered recommendations.
 
 ## Tech Stack

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelf Tracker – My Shelf</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    /* ── Shelf filter tabs ── */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .filter-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-tab.active, .filter-tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(212,146,42,0.08);
+    }
+
+    /* ── Bookshelf unit ── */
+    body { background: #eaf3fb; background-image: none; }
+
+    .shelf-unit {
+      background:
+        linear-gradient(to bottom, #cce0f5 0%, #b8d4ee 100%);
+      border: 1px solid #93bcd8;
+      border-radius: 4px;
+      padding: 0 20px 20px;
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .shelf-label {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 0 16px;
+    }
+
+    /* The row of books */
+    .shelf-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      min-height: 220px;
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* The wooden shelf plank */
+    .shelf-plank {
+      height: 16px;
+      background: linear-gradient(to bottom,
+        #7aaecf 0%, #5a94ba 40%, #3d7da8 100%);
+      border-radius: 2px;
+      box-shadow:
+        0 4px 12px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+      margin: 0 -20px;
+    }
+
+    /* ── Individual book ── */
+    .book {
+      --color: #7b2d2d;
+      --h: 200px;
+      --w: 38px;
+
+      position: relative;
+      width: var(--w);
+      height: var(--h);
+      border-radius: 2px 3px 3px 2px;
+      background: var(--color);
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.25s ease;
+      flex-shrink: 0;
+      user-select: none;
+
+      box-shadow:
+        inset -5px 0 10px rgba(0,0,0,0.35),
+        inset 3px 0 6px rgba(255,255,255,0.07),
+        4px 6px 18px rgba(0,0,0,0.5),
+        -1px 0 4px rgba(0,0,0,0.4);
+    }
+
+    .book:hover {
+      transform: translateY(-18px) rotate(-2deg);
+      box-shadow:
+        inset -5px 0 10px rgba(0,0,0,0.35),
+        inset 3px 0 6px rgba(255,255,255,0.07),
+        6px 22px 28px rgba(0,0,0,0.6),
+        -1px 0 4px rgba(0,0,0,0.4);
+      z-index: 5;
+    }
+
+    /* Spine groove on left edge */
+    .book::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0;
+      width: 6px; height: 100%;
+      background: rgba(0,0,0,0.25);
+      border-radius: 2px 0 0 2px;
+    }
+
+    /* Highlight on right edge */
+    .book::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 5%;
+      width: 2px; height: 90%;
+      background: rgba(255,255,255,0.06);
+      border-radius: 1px;
+    }
+
+    .book-spine-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: calc(var(--h) - 20px);
+      font-size: 10px;
+      font-family: var(--font-head);
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      pointer-events: none;
+      letter-spacing: 0.05em;
+    }
+
+    .book-status-dot {
+      position: absolute;
+      bottom: 8px;
+      right: 50%;
+      transform: translateX(50%);
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .status-want_to_read  .book-status-dot { background: #1212e8; }
+    .status-reading       .book-status-dot { background: #27f278; }
+    .status-completed     .book-status-dot { background: #ed3939; }
+
+    /* ── Add book button (looks like a book slot) ── */
+    .add-book-slot {
+      width: 38px;
+      height: 200px;
+      border: 2px dashed var(--border);
+      border-radius: 2px 3px 3px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .add-book-slot:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(212,146,42,0.05);
+      transform: translateY(-4px);
+    }
+
+    /* ── Book tooltip ── */
+    .book-tooltip {
+      position: absolute;
+      bottom: calc(100% + 14px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      width: 180px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 20;
+      text-align: center;
+    }
+    .book:hover .book-tooltip { opacity: 1; }
+    .book-tooltip strong { display: block; font-family: var(--font-head); font-size: 0.9rem; margin-bottom: 2px; }
+    .book-tooltip em { color: var(--text-muted); font-style: normal; font-size: 0.75rem; }
+
+    /* ── Add book modal color picker ── */
+    .color-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .color-swatch {
+      width: 28px; height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-swatch:hover { transform: scale(1.15); }
+    .color-swatch.selected { border-color: white; transform: scale(1.15); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .num {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 1.6rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-item .lbl {
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stat-divider { width: 1px; background: var(--border); }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo"><img src="/static/noun-books-shelf-4194571.png" alt="" style="height:50px; vertical-align:middle; margin-right:6px;"><span>Shelf</span>Tracker</div>
+    <div class="nav-links">
+      <a href="/bookshelf" class="active">My Shelf</a>
+      <a href="/stats">Stats & Recs</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="API.logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="page">
+    <!-- Quick stats bar -->
+    <div class="stats-bar" id="stats-bar" style="display:none">
+      <div class="stat-item"><span class="num" id="sb-total">0</span><span class="lbl">Books</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="num" id="sb-reading">0</span><span class="lbl">Reading</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="num" id="sb-done">0</span><span class="lbl">Finished</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="num" id="sb-want">0</span><span class="lbl">Want to Read</span></div>
+    </div>
+
+    <!-- Section header -->
+    <div class="section-header">
+      <h2>My <span>Bookshelf</span></h2>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Book</button>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      <button class="filter-tab" data-filter="reading" onclick="setFilter('reading', this)">Currently Reading</button>
+      <button class="filter-tab" data-filter="completed" onclick="setFilter('completed', this)">Completed</button>
+      <button class="filter-tab" data-filter="want_to_read" onclick="setFilter('want_to_read', this)">Want to Read</button>
+    </div>
+
+    <!-- Shelf -->
+    <div id="shelf-container">
+      <div class="spinner"></div>
+    </div>
+  </main>
+
+  <!-- ADD BOOK MODAL -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add to Shelf</h3>
+        <button class="modal-close" onclick="closeAddModal()">×</button>
+      </div>
+      <div class="form-group">
+        <label>Title *</label>
+        <input id="add-title" type="text" placeholder="Book title" />
+      </div>
+      <div class="form-group">
+        <label>Author *</label>
+        <input id="add-author" type="text" placeholder="Author name" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Genre</label>
+          <input id="add-genre" type="text" placeholder="Fiction, Sci-Fi…" />
+        </div>
+        <div class="form-group">
+          <label>Total Pages</label>
+          <input id="add-pages" type="number" min="1" placeholder="320" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="add-status">
+          <option value="want_to_read">Want to Read</option>
+          <option value="reading">Currently Reading</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Spine Colour</label>
+        <div class="color-picker" id="color-picker"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeAddModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="submitAddBook()">Add Book</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script>
+    requireAuth();
+    document.getElementById("nav-username").textContent = API.getUsername() || "";
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let allBooks = [];
+    let activeFilter = "all";
+    let selectedColor = null;
+
+    const COLORS = [
+      "#7B2D2D","#2D4A7B","#2D7B4A","#6B2D7B",
+      "#7B5A2D","#2D7B7B","#7B2D5A","#4A4A7B",
+      "#5A7B2D","#7B3D2D","#2D5A7B","#7B6B2D",
+    ];
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    buildColorPicker();
+    loadBooks();
+
+    async function loadBooks() {
+      try {
+        allBooks = await API.books();
+        renderShelf();
+        updateStatsBar();
+      } catch (e) {
+        toast(e.message, "error");
+      }
+    }
+
+    // ── Stats bar ─────────────────────────────────────────────────────────────
+    function updateStatsBar() {
+      if (!allBooks.length) return;
+      document.getElementById("stats-bar").style.display = "flex";
+      document.getElementById("sb-total").textContent   = allBooks.length;
+      document.getElementById("sb-reading").textContent = allBooks.filter(b => b.status === "reading").length;
+      document.getElementById("sb-done").textContent    = allBooks.filter(b => b.status === "completed").length;
+      document.getElementById("sb-want").textContent    = allBooks.filter(b => b.status === "want_to_read").length;
+    }
+
+    // ── Filter ────────────────────────────────────────────────────────────────
+    function setFilter(filter, el) {
+      activeFilter = filter;
+      document.querySelectorAll(".filter-tab").forEach(t => t.classList.remove("active"));
+      el.classList.add("active");
+      renderShelf();
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function renderShelf() {
+      const filtered = activeFilter === "all"
+        ? allBooks
+        : allBooks.filter(b => b.status === activeFilter);
+
+      const container = document.getElementById("shelf-container");
+
+      if (!filtered.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No books here yet</h3>
+            <p>Your shelf is empty — add your first book to get started.</p>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Book</button>
+          </div>`;
+        return;
+      }
+
+      // Split books into rows of ~14 each
+      const BOOKS_PER_ROW = 14;
+      const rows = [];
+      for (let i = 0; i < filtered.length; i += BOOKS_PER_ROW) {
+        rows.push(filtered.slice(i, i + BOOKS_PER_ROW));
+      }
+
+      container.innerHTML = rows.map((row, ri) => `
+        <div class="shelf-unit">
+          <div class="shelf-label">Shelf ${ri + 1}</div>
+          <div class="shelf-row">
+            ${row.map(b => bookHTML(b)).join("")}
+            ${ri === rows.length - 1 ? addSlotHTML() : ""}
+          </div>
+          <div class="shelf-plank"></div>
+        </div>
+      `).join("");
+    }
+
+    function bookHTML(b) {
+      const height = 170 + Math.floor(Math.random() * 0 + (b.pages ? Math.min(b.pages / 10, 50) : 20));
+      return `
+        <div class="book status-${b.status}"
+          style="--color:${b.cover_color}; --h:${Math.max(160, Math.min(220, height))}px; --w:${b.spine_width}px"
+          onclick="goToBook(${b.id})"
+          title="${b.title}">
+          <span class="book-spine-text">${b.title}</span>
+          <div class="book-status-dot"></div>
+          <div class="book-tooltip">
+            <strong>${b.title}</strong>
+            <em>${b.author}</em>
+            ${b.status === "reading" && b.pages ? `<div style="margin-top:6px"><div class="progress-bar"><div class="progress-bar-fill" style="width:${b.progress_pct}%"></div></div><div style="color:var(--text-muted);font-size:0.7rem;margin-top:3px">${b.progress_pct}%</div></div>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function addSlotHTML() {
+      return `<div class="add-book-slot" onclick="openAddModal()" title="Add a book">+</div>`;
+    }
+
+    function goToBook(id) { window.location.href = `/book/${id}`; }
+
+    // ── Add book modal ────────────────────────────────────────────────────────
+    function buildColorPicker() {
+      const picker = document.getElementById("color-picker");
+      selectedColor = COLORS[0];
+      picker.innerHTML = COLORS.map((c, i) =>
+        `<div class="color-swatch ${i === 0 ? "selected" : ""}"
+          style="background:${c}"
+          onclick="selectColor('${c}', this)">
+        </div>`
+      ).join("");
+    }
+
+    function selectColor(color, el) {
+      selectedColor = color;
+      document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+      el.classList.add("selected");
+    }
+
+    function openAddModal() {
+      document.getElementById("add-modal").classList.add("open");
+      document.getElementById("add-title").focus();
+    }
+
+    function closeAddModal() {
+      document.getElementById("add-modal").classList.remove("open");
+      ["add-title","add-author","add-genre","add-pages"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("add-status").value = "want_to_read";
+    }
+
+    async function submitAddBook() {
+      const title  = document.getElementById("add-title").value.trim();
+      const author = document.getElementById("add-author").value.trim();
+      if (!title || !author) return toast("Title and author are required", "error");
+
+      const payload = {
+        title,
+        author,
+        genre:        document.getElementById("add-genre").value.trim() || null,
+        pages:        parseInt(document.getElementById("add-pages").value) || null,
+        status:       document.getElementById("add-status").value,
+        cover_color:  selectedColor,
+      };
+
+      try {
+        await API.addBook(payload);
+        toast("Book added to shelf!", "success");
+        closeAddModal();
+        loadBooks();
+      } catch (e) {
+        toast(e.message, "error");
+      }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById("add-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeAddModal();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+.env
+shelf_tracker.db
+__pycache__/
+.venv/
+*.pyc

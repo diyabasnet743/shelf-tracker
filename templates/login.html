@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelf Tracker – Sign In</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    /* ── Pastel light theme overrides for the login page ── */
+    :root {
+      --login-bg:       #f5f3ef;
+      --login-surface:  #ffffff;
+      --login-surface2: #f0ede8;
+      --login-accent:   #a07850;
+      --login-accent-h: #7a5c3a;
+      --login-text:     #2c2318;
+      --login-muted:    #8c7b6a;
+      --login-border:   rgba(160, 120, 80, 0.18);
+      --login-shadow:   0 8px 40px rgba(80, 50, 20, 0.10);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--login-bg);
+      color: var(--login-text);
+    }
+
+    /* ── Two-panel wrapper ── */
+    .auth-page {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Left: form panel ── */
+    .auth-left {
+      flex: 0 0 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: var(--login-surface);
+      box-shadow: 4px 0 32px rgba(80,50,20,0.07);
+      z-index: 1;
+    }
+
+    .auth-inner { width: 100%; max-width: 360px; }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .auth-logo h1 {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      color: var(--login-accent);
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+    .auth-logo h1 em { font-style: italic; font-weight: 400; }
+    .auth-logo p {
+      color: var(--login-muted);
+      font-size: 0.88rem;
+    }
+
+    /* ── Tabs ── */
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--login-border);
+    }
+    .auth-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--login-muted);
+      padding: 10px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .auth-tab.active {
+      color: var(--login-accent);
+      border-bottom-color: var(--login-accent);
+    }
+    .auth-tab:hover:not(.active) { color: var(--login-text); }
+
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    /* ── Override global input styles for this page ── */
+    .auth-inner input {
+      background: var(--login-surface2);
+      border: 1px solid var(--login-border);
+      color: var(--login-text);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .auth-inner input:focus {
+      outline: none;
+      border-color: var(--login-accent);
+      box-shadow: 0 0 0 3px rgba(160,120,80,0.12);
+    }
+    .auth-inner input::placeholder { color: #bbb0a0; }
+
+    .auth-inner label {
+      color: var(--login-muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+    }
+
+    /* ── Submit button ── */
+    .auth-submit {
+      width: 100%;
+      margin-top: 4px;
+      justify-content: center;
+      padding: 13px;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      background: var(--login-accent);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      font-family: var(--font-body);
+      letter-spacing: 0.04em;
+    }
+    .auth-submit:hover {
+      background: var(--login-accent-h);
+      transform: translateY(-1px);
+    }
+    .auth-submit:active { transform: translateY(0); }
+
+    /* ── Error box ── */
+    .auth-error {
+      background: #fff5f5;
+      border: 1px solid #f5c6c6;
+      color: #b94040;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    /* ── Right: image panel ── */
+    .auth-right {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      /*
+        To use your own photo, replace the gradient below with:
+        background-image: url('/static/images/your-photo.jpg');
+        background-size: cover;
+        background-position: center;
+      */
+      background:
+        linear-gradient(160deg, #e8ddd0 0%, #d4c4b0 40%, #c4a882 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      padding: 48px;
+    }
+
+    /* Decorative overlay text on the image panel */
+    .auth-right-caption {
+      position: relative;
+      z-index: 1;
+    }
+    .auth-right-caption blockquote {
+      font-family: var(--font-head);
+      font-size: 1.6rem;
+      font-style: italic;
+      color: #5a3a1a;
+      line-height: 1.4;
+      max-width: 320px;
+      margin: 0 0 10px 0;
+    }
+    .auth-right-caption cite {
+      font-size: 0.82rem;
+      color: #8a6040;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-style: normal;
+    }
+
+    /* Subtle vignette over the image */
+    .auth-right::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(90,58,26,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── Responsive: stack on small screens ── */
+    @media (max-width: 820px) {
+      .auth-page { flex-direction: column; }
+      .auth-left  { flex: none; width: 100%; padding: 40px 24px; box-shadow: none; }
+      .auth-right { min-height: 200px; padding: 28px 24px; }
+      .auth-right-caption blockquote { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-page">
+
+    <!-- ── Left: Sign-in form ── -->
+    <div class="auth-left">
+      <div class="auth-inner">
+
+        <div class="auth-logo">
+          <h1>📚 <em>Shelf</em>Tracker</h1>
+          <p>Your personal reading library</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+          <button class="auth-tab" onclick="switchTab('signup')">Create Account</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="login-form" class="auth-form active">
+          <div id="login-error" class="auth-error"></div>
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="reader@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <button class="auth-submit" onclick="doLogin()">Sign In</button>
+        </div>
+
+        <!-- SIGNUP FORM -->
+        <div id="signup-form" class="auth-form">
+          <div id="signup-error" class="auth-error"></div>
+          <div class="form-group">
+            <label for="signup-username">Username</label>
+            <input id="signup-username" type="text" placeholder="booklover42" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email</label>
+            <input id="signup-email" type="email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <input id="signup-password" type="password" placeholder="Min. 8 characters" autocomplete="new-password" />
+          </div>
+          <button class="auth-submit" onclick="doSignup()">Create Account</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Right: image / decorative panel ── -->
+    <div class="auth-right">
+      <div class="auth-right-caption">
+        <blockquote>"A reader lives a thousand lives before he dies."</blockquote>
+        <cite>— George R.R. Martin</cite>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script>
+    if (API.getToken()) window.location.href = "/bookshelf";
+
+    function switchTab(tab) {
+      document.querySelectorAll(".auth-tab").forEach((t, i) => {
+        t.classList.toggle("active", (i === 0) === (tab === "login"));
+      });
+      document.getElementById("login-form").classList.toggle("active", tab === "login");
+      document.getElementById("signup-form").classList.toggle("active", tab === "signup");
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    async function doLogin() {
+      document.getElementById("login-error").style.display = "none";
+      const email    = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      if (!email || !password) return showError("login-error", "Please fill in all fields.");
+      try {
+        const data = await API.login({ email, password });
+        API.setToken(data.access_token);
+        API.setUsername(data.username);
+        window.location.href = "/bookshelf";
+      } catch (e) {
+        showError("login-error", e.message);
+      }
+    }
+
+    async function doSignup() {
+      document.getElementById("signup-error").style.display = "none";
+      const username = document.getElementById("signup-username").value.trim();
+      const email    = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value;
+      if (!username || !email || !password) return showError("signup-error", "Please fill in all fields.");
+      try {
+        const data = await API.signup({ username, email, password });
+        API.setToken(data.access_token);
+        API.setUsername(data.username);
+        window.location.href = "/bookshelf";
+      } catch (e) {
+        showError("signup-error", e.message);
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const loginActive = document.getElementById("login-form").classList.contains("active");
+      loginActive ? doLogin() : doSignup();
+    });
+  </script>
+</body>
+</html>

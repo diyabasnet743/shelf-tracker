@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelf Tracker – Book Detail</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); text-decoration: none; }
+
+    /* ── Book hero ── */
+    .book-hero {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 40px;
+      align-items: flex-start;
+    }
+
+    .book-3d {
+      flex-shrink: 0;
+      position: relative;
+      width: 80px;
+      height: 280px;
+      border-radius: 3px 5px 5px 3px;
+      background: var(--book-color, #7b2d2d);
+      box-shadow:
+        inset -8px 0 16px rgba(0,0,0,0.4),
+        inset 4px 0 8px rgba(255,255,255,0.08),
+        8px 12px 32px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .book-3d::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0;
+      width: 12px; height: 100%;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px 0 0 3px;
+    }
+    .book-3d .book-3d-title {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+      max-height: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0.05em;
+    }
+
+    .book-meta { flex: 1; min-width: 0; }
+    .book-meta h1 {
+      font-size: 2rem;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .book-meta .author {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+    .meta-cell {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+    .meta-cell .meta-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .meta-cell .meta-value {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── Progress section ── */
+    .section-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section-block h3 {
+      font-size: 1.1rem;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    .section-block h3 span { color: var(--accent); }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .progress-bar { height: 8px; }
+
+    .progress-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .progress-input-row input {
+      width: 100px;
+      flex-shrink: 0;
+    }
+
+    /* ── Edit section ── */
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ── Review ── */
+    .star-row {
+      display: flex;
+      gap: 6px;
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    .star-row .s { color: var(--surface2); transition: color 0.1s; }
+    .star-row .s.on { color: var(--accent); }
+
+    .review-display {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 18px;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 16px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* ── Light overrides for this page ── */
+    body { background: #eaf3fb; background-image: none; }
+
+    .meta-cell {
+      background: #ffffff;
+      border-color: #e2e8f0;
+    }
+    .meta-cell .meta-label { color: #8a96a8; }
+    .meta-cell .meta-value { color: #1a202c; }
+
+    .review-display {
+      background: #f0f4f8;
+      color: #1a202c;
+    }
+
+    .star-row .s { color: #cbd5e0; }
+
+    .badge-want {
+      background: #e8e8ff;
+      color: #4a4aaa;
+    }
+
+    /* ── Danger zone ── */
+    .danger-zone {
+      border: 1px solid rgba(192,57,43,0.2);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .danger-zone p { font-size: 0.85rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+      <div class="nav-logo"><img src="/static/noun-books-shelf-4194571.png" alt="" style="height:50px; vertical-align:middle; margin-right:6px;"><span>Shelf</span>Tracker</div>
+    <div class="nav-links">
+      <a href="/bookshelf">My Shelf</a>
+      <a href="/stats">Stats & Recs</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="API.logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="page" id="main" style="display:none">
+    <a class="back-link" href="/bookshelf">← Back to Shelf</a>
+
+    <!-- Book Hero -->
+    <div class="book-hero">
+      <div class="book-3d" id="book-visual">
+        <span class="book-3d-title" id="hero-spine">Loading...</span>
+      </div>
+      <div class="book-meta">
+        <h1 id="hero-title">—</h1>
+        <div class="author" id="hero-author">—</div>
+        <div id="hero-badge"></div>
+
+        <div class="meta-grid" id="meta-grid"></div>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-sm" onclick="scrollTo('#edit-section')">Edit Book</button>
+          <button class="btn btn-secondary btn-sm" id="btn-mark-complete" style="display:none" onclick="markComplete()">Mark Complete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="section-block" id="progress-section" style="display:none">
+      <h3>Reading <span>Progress</span></h3>
+      <div class="progress-label">
+        <span id="progress-pages-label">0 of 0 pages</span>
+        <span id="progress-pct-label">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-input-row">
+        <input type="number" id="current-page-input" min="0" placeholder="Current page" />
+        <button class="btn btn-secondary btn-sm" onclick="updateProgress()">Update</button>
+      </div>
+    </div>
+
+    <!-- Review -->
+    <div class="section-block" id="review-section">
+      <h3>My <span>Review</span></h3>
+      <div id="review-display" style="display:none">
+        <div class="star-row" id="review-display-stars"></div>
+        <div class="review-display" id="review-display-text"></div>
+        <button class="btn btn-secondary btn-sm" onclick="editReview()">Edit Review</button>
+      </div>
+      <div id="review-form">
+        <div class="star-row" id="star-row">
+          <span class="s" data-v="1">★</span>
+          <span class="s" data-v="2">★</span>
+          <span class="s" data-v="3">★</span>
+          <span class="s" data-v="4">★</span>
+          <span class="s" data-v="5">★</span>
+        </div>
+        <div class="form-group">
+          <label>Your thoughts</label>
+          <textarea id="review-content" rows="5" placeholder="What did you think of this book?"></textarea>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="submitReview()">Save Review</button>
+      </div>
+    </div>
+
+    <!-- Edit Book -->
+    <div class="section-block" id="edit-section">
+      <h3>Edit <span>Details</span></h3>
+      <div class="edit-grid">
+        <div class="form-group">
+          <label>Title</label>
+          <input id="edit-title" type="text" />
+        </div>
+        <div class="form-group">
+          <label>Author</label>
+          <input id="edit-author" type="text" />
+        </div>
+        <div class="form-group">
+          <label>Genre</label>
+          <input id="edit-genre" type="text" />
+        </div>
+        <div class="form-group">
+          <label>Total Pages</label>
+          <input id="edit-pages" type="number" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="edit-status">
+            <option value="want_to_read">Want to Read</option>
+            <option value="reading">Currently Reading</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="saveEdits()">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="danger-zone">
+      <div>
+        <strong>Remove from shelf</strong>
+        <p>This will permanently delete this book and its review.</p>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteBook()">Delete Book</button>
+    </div>
+  </main>
+
+  <div class="spinner" id="loading-spinner" style="margin-top:80px"></div>
+
+  <script src="/static/js/api.js"></script>
+  <script>
+    requireAuth();
+    document.getElementById("nav-username").textContent = API.getUsername() || "";
+
+    const bookId = parseInt(window.location.pathname.split("/").pop());
+    let book = null;
+    let reviewRating = 0;
+
+    // ── Load ──────────────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        [book] = await Promise.all([API.book(bookId)]);
+        renderBook();
+        await loadReview();
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("main").style.display = "block";
+      } catch (e) {
+        toast(e.message, "error");
+      }
+    }
+
+    function renderBook() {
+      // Visual
+      document.getElementById("book-visual").style.setProperty("--book-color", book.cover_color);
+      document.getElementById("hero-spine").textContent = book.title;
+
+      document.getElementById("hero-title").textContent  = book.title;
+      document.getElementById("hero-author").textContent = `by ${book.author}`;
+
+      const statusLabels = { want_to_read: "Want to Read", reading: "Reading", completed: "Completed" };
+      const badgeClass   = { want_to_read: "badge-want", reading: "badge-reading", completed: "badge-done" };
+      document.getElementById("hero-badge").innerHTML =
+        `<span class="badge ${badgeClass[book.status]}">${statusLabels[book.status]}</span>`;
+
+      // Meta grid
+      const cells = [
+        { label: "Genre",    value: book.genre || "—" },
+        { label: "Pages",    value: book.pages  || "—" },
+        { label: "Rating",   value: book.rating ? `${book.rating} ★` : "—" },
+        { label: "Added",    value: new Date(book.added_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) },
+      ];
+      if (book.completed_at) cells.push({
+        label: "Finished",
+        value: new Date(book.completed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      });
+
+      document.getElementById("meta-grid").innerHTML = cells.map(c =>
+        `<div class="meta-cell"><div class="meta-label">${c.label}</div><div class="meta-value">${c.value}</div></div>`
+      ).join("");
+
+      // Mark complete button
+      if (book.status !== "completed") {
+        document.getElementById("btn-mark-complete").style.display = "";
+      }
+
+      // Progress
+      if (book.status === "reading" && book.pages) {
+        const sec = document.getElementById("progress-section");
+        sec.style.display = "block";
+        document.getElementById("current-page-input").value = book.current_page;
+        document.getElementById("current-page-input").max = book.pages;
+        updateProgressUI(book.current_page, book.pages, book.progress_pct);
+      }
+
+      // Prefill edit form
+      document.getElementById("edit-title").value  = book.title;
+      document.getElementById("edit-author").value = book.author;
+      document.getElementById("edit-genre").value  = book.genre || "";
+      document.getElementById("edit-pages").value  = book.pages || "";
+      document.getElementById("edit-status").value = book.status;
+    }
+
+    function updateProgressUI(cur, total, pct) {
+      document.getElementById("progress-pages-label").textContent = `${cur} of ${total} pages`;
+      document.getElementById("progress-pct-label").textContent   = `${pct}%`;
+      document.getElementById("progress-fill").style.width        = `${pct}%`;
+    }
+
+    async function updateProgress() {
+      const cur = parseInt(document.getElementById("current-page-input").value);
+      if (isNaN(cur)) return toast("Enter a valid page number", "error");
+      try {
+        book = await API.updateBook(bookId, { current_page: cur });
+        updateProgressUI(book.current_page, book.pages, book.progress_pct);
+        toast("Progress updated!", "success");
+      } catch (e) { toast(e.message, "error"); }
+    }
+
+    async function markComplete() {
+      try {
+        book = await API.updateBook(bookId, { status: "completed" });
+        toast("Congratulations on finishing! 🎉", "success");
+        setTimeout(() => location.reload(), 1000);
+      } catch (e) { toast(e.message, "error"); }
+    }
+
+    // ── Review ────────────────────────────────────────────────────────────────
+    async function loadReview() {
+      const review = await API.getReview(bookId);
+      if (review) {
+        document.getElementById("review-form").style.display    = "none";
+        document.getElementById("review-display").style.display = "block";
+        document.getElementById("review-display-text").textContent = review.content;
+        document.getElementById("review-display-stars").innerHTML =
+          [1,2,3,4,5].map(n => `<span class="s ${n <= review.rating ? "on" : ""}">★</span>`).join("");
+      }
+    }
+
+    function editReview() {
+      document.getElementById("review-display").style.display = "none";
+      document.getElementById("review-form").style.display    = "block";
+    }
+
+    // Star picker
+    const starRow = document.getElementById("star-row");
+    starRow.addEventListener("mouseover", e => {
+      if (!e.target.dataset.v) return;
+      const v = +e.target.dataset.v;
+      starRow.querySelectorAll(".s").forEach(s => s.classList.toggle("on", +s.dataset.v <= v));
+    });
+    starRow.addEventListener("mouseleave", () => {
+      starRow.querySelectorAll(".s").forEach(s => s.classList.toggle("on", +s.dataset.v <= reviewRating));
+    });
+    starRow.addEventListener("click", e => {
+      if (!e.target.dataset.v) return;
+      reviewRating = +e.target.dataset.v;
+    });
+
+    async function submitReview() {
+      const content = document.getElementById("review-content").value.trim();
+      if (!content) return toast("Write something first!", "error");
+      if (!reviewRating) return toast("Pick a star rating", "error");
+      try {
+        await API.saveReview(bookId, { content, rating: reviewRating });
+        toast("Review saved!", "success");
+        setTimeout(() => location.reload(), 800);
+      } catch (e) { toast(e.message, "error"); }
+    }
+
+    // ── Edit ──────────────────────────────────────────────────────────────────
+    async function saveEdits() {
+      const payload = {
+        title:  document.getElementById("edit-title").value.trim(),
+        author: document.getElementById("edit-author").value.trim(),
+        genre:  document.getElementById("edit-genre").value.trim() || null,
+        pages:  parseInt(document.getElementById("edit-pages").value) || null,
+        status: document.getElementById("edit-status").value,
+      };
+      try {
+        book = await API.updateBook(bookId, payload);
+        toast("Changes saved!", "success");
+        renderBook();
+      } catch (e) { toast(e.message, "error"); }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+    async function deleteBook() {
+      if (!confirm(`Remove "${book?.title}" from your shelf? This cannot be undone.`)) return;
+      try {
+        await API.deleteBook(bookId);
+        toast("Book removed", "success");
+        setTimeout(() => window.location.href = "/bookshelf", 600);
+      } catch (e) { toast(e.message, "error"); }
+    }
+
+    function scrollTo(selector) {
+      document.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    init();
+  </script>
+</body>
+</html>
